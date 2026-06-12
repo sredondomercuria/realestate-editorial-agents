@@ -17,6 +17,12 @@ run:  ## Ejecuta el workflow editorial completo (respeta DRY_RUN del .env)
 dry-run:  ## Fuerza modo simulación (no publica nada)
 	DRY_RUN=true python3 -m editorial_team.run_daily
 
+web:  ## Levanta el dashboard de revisión/aprobación (http://localhost:8080)
+	python3 -m editorial_team.webapp.app
+
+agent-setup:  ## Crea/encuentra el Managed Agent en la plataforma de Claude e imprime los IDs
+	python3 -m editorial_team.integrations.managed_agents setup
+
 test:  ## Corre los tests
 	python3 -m pytest -q
 

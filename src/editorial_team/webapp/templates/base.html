@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Equipo Editorial Real Estate{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/htmx.org@2.0.3"></script>
+  <style>
+    .prose-editorial h2 { font-size:1.25rem; font-weight:600; margin:1rem 0 .5rem; }
+    .prose-editorial p { margin:.6rem 0; line-height:1.6; }
+    .prose-editorial ul { list-style:disc; margin:.5rem 0 .5rem 1.25rem; }
+    .prose-editorial a { color:#2563eb; text-decoration:underline; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+  <header class="bg-slate-900 text-white">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="/" class="font-semibold tracking-tight">🏠 Equipo Editorial · Real Estate</a>
+      <span class="text-xs text-slate-300">
+        runtime: <b>{{ settings.agent_runtime }}</b> ·
+        DRY_RUN: <b>{{ settings.dry_run }}</b>
+      </span>
+    </div>
+  </header>
+  <main class="max-w-5xl mx-auto px-4 py-6">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="max-w-5xl mx-auto px-4 py-8 text-xs text-slate-400">
+    realestate-editorial-agents · LangGraph + Claude · {{ settings.region_focus }}
+  </footer>
+</body>
+</html>

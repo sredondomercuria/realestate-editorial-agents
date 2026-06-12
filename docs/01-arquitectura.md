@@ -10,10 +10,14 @@ revalidan, ilustran y publican un editorial de Real Estate todos los días.
 |-------|----------|---------|
 | Orquestación | **LangGraph** | Modela el equipo como un grafo de estados con bucles (revisión crítica), ramas condicionales y memoria compartida. Determinístico y testeable. |
 | Modelo | **Claude** (`claude-opus-4-8` / `claude-sonnet-4-6`) vía SDK oficial `anthropic` | Razonamiento adaptativo, *structured outputs* y herramientas web server-side. Control exacto de la API. |
-| Búsqueda y verificación | **`web_search` + `web_fetch`** (herramientas server-side de Claude) | Investigación con citas, sin montar un buscador propio. |
-| Skills | **Claude Agent Skills** (`skills/`) | Encapsulan el "cómo" de cada función; reutilizables por el workflow programático y por Cowork. |
+| Búsqueda y verificación | **`web_search` + `web_fetch`** (Claude) o **Tavily** | Investigación con citas (`RESEARCH_BACKEND`). |
+| Skills | **Claude Agent Skills** (`skills/`) | Encapsulan el "cómo"; las usa el grafo y el Managed Agent. |
+| Runtime de agentes | **LangGraph** + **Managed Agents** (híbrido) | LangGraph orquesta; la producción autónoma corre en la plataforma de Claude. |
 | Publicación | **WordPress REST** + **upload-post.com** | Blog + todas las redes con clientes simples y reemplazables. |
-| Imágenes | Proveedor configurable (`gpt-image-1` por defecto) | Claude no genera imágenes: escribe el prompt; un proveedor externo renderiza. |
+| Imágenes | **Gemini "Nano Banana"** (`gemini-3-pro-image`) + Cloudinary | Claude escribe el prompt; Gemini renderiza; CDN opcional. |
+| UI + Backend | **FastAPI + HTMX** | Panel de revisión/aprobación (human-in-the-loop). |
+| Persistencia | **SQLite** (local) / Cloud SQL (GCP) | Historial de corridas, habilita la UI. |
+| Despliegue | **GCP Cloud Run** + Secret Manager + Cloud Scheduler | Local-first, listo para la nube. |
 
 ## El equipo (agentes = nodos del grafo)
 

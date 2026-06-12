@@ -6,8 +6,20 @@ pydantic-settings>=2.2
 requests>=2.31
 python-dotenv>=1.0
 
-# Opcional — sólo si IMAGE_PROVIDER=openai
-openai>=1.40
+# UI: dashboard FastAPI + HTMX (server-side, sin build de frontend)
+fastapi>=0.111
+uvicorn[standard]>=0.30
+jinja2>=3.1
+python-multipart>=0.0.9
+markdown>=3.6
 
-# Desarrollo / tests (instalá con: pip install -r requirements.txt)
+# Integraciones
+google-genai>=1.0          # imágenes Gemini "Nano Banana"
+cloudinary>=1.40           # hosting de imágenes (opcional)
+tavily-python>=0.5         # búsqueda para agentes (opcional)
+
+# GCP (opcional — sólo si USE_GCP_SECRETS=true o despliegue en Cloud Run)
+google-cloud-secret-manager>=2.20
+
+# Desarrollo / tests
 pytest>=8.0

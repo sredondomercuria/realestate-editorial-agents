@@ -1,125 +1,124 @@
 # 🏠 realestate-editorial-agents
 
 **Tutorial completo: construí tu propio sistema multiagente con la plataforma
-Claude + LangGraph.**
+Claude + LangGraph, con dashboard web y listo para GCP.**
 
 Un **equipo editorial autónomo** que, todos los días, busca noticias de **Real
 Estate de Argentina y Latinoamérica**, **valida los datos** con fuentes
 independientes, redacta un **editorial profesional**, lo somete a una
-**revalidación crítica**, genera **imágenes** que acompañan cada post y lo
-**publica en un blog y en todas las redes sociales** — coordinado por un grafo de
-agentes especializados.
+**revalidación crítica**, genera **imágenes** (Gemini "Nano Banana") y lo **publica
+en un blog y en todas las redes** — con un **dashboard de revisión/aprobación** y
+**runtime híbrido** (LangGraph + agentes en la plataforma de Claude).
 
 > Este repo es a la vez un **tutorial paso a paso** (`docs/`) y un **proyecto
-> funcional** que podés correr y adaptar.
+> funcional** que podés correr local y deployar a GCP.
 
 ---
 
-## ✨ Qué vas a aprender
+## ✨ Qué incluye
 
-- Diseñar un **equipo de agentes** con **LangGraph** (estado compartido, bucles,
-  ramas condicionales).
-- Usar **Claude** (`claude-opus-4-8` / `claude-sonnet-4-6`) con el SDK oficial:
-  *structured outputs*, razonamiento adaptativo y **herramientas web server-side**
-  (`web_search` / `web_fetch`) para investigar con citas.
-- Encapsular cada función como **Claude Agent Skill** reutilizable.
-- Implementar **validación de datos** y **revalidación crítica adversarial**.
-- **Publicar** en WordPress (REST API) y en redes con **upload-post**, con
-  imágenes generadas.
-- **Programar** la ejecución diaria (cron / GitHub Actions / Cowork).
-- Hacerlo todo **bajo mejores prácticas** (seguridad, costos, observabilidad).
+- **Equipo de agentes** con **LangGraph** (estado compartido, bucle de revalidación crítica).
+- **Runtime híbrido**: la producción autónoma corre como **Managed Agent** en la
+  plataforma de Claude; LangGraph orquesta el resto. (También hay modo `local`.)
+- **Claude** (`claude-opus-4-8` / `claude-sonnet-4-6`): *structured outputs*,
+  razonamiento adaptativo y **`web_search`/`web_fetch`** server-side (o **Tavily**).
+- **7 Claude Agent Skills** (`skills/`), una por funcionalidad.
+- **Imágenes** con **Gemini "Nano Banana"** (`gemini-3-pro-image`) + **Cloudinary**.
+- **Publicación** en **WordPress** + todas las redes con **upload-post**.
+- **Dashboard FastAPI + HTMX**: revisar, editar y **aprobar antes de publicar**.
+- **Persistencia SQLite** (historial de corridas).
+- **Listo para GCP**: Dockerfile (Cloud Run), Secret Manager, Cloud Scheduler.
+- **DRY_RUN seguro por defecto** + tests (verde) + docs.
 
-## 🧠 El equipo (agentes)
+## 🧠 El equipo (runtime híbrido)
 
 ```
-START → 🔎 Scout → 🗂️ Curador → ✅ Fact-checker → ✍️ Redactor → 🧐 Crítico ─┐
-                                                       ▲                      │ needs_revision
-                                                       └──────────────────────┘
-                                                                              │ approved
-                                                                              ▼
-                          🎨 Ilustrador → 📱 Adaptador de redes → 🚀 Publicador → END
+START → producer (Managed Agent: investiga→valida→redacta→revalida)
+          → 🎨 Ilustrador (Gemini) → 📱 Adaptador de redes → 🚀 Publicador → END
+                      (LangGraph orquesta · todo persistido en SQLite)
 ```
 
-Cada agente tiene **una responsabilidad** y una **skill** asociada. El bucle
-`Redactor ⇄ Crítico` implementa la revalidación crítica que evita publicar datos
-flojos. → Diagrama y detalle en [docs/01-arquitectura.md](docs/01-arquitectura.md).
+En modo `local`, `producer` se reemplaza por la cadena
+`Scout → Curador → Fact-checker → Redactor ⇄ Crítico`. → [docs/01-arquitectura.md](docs/01-arquitectura.md).
 
-## 🚀 Quickstart
+## 🚀 Quickstart (local)
 
 ```bash
-# 1) Instalar
-python3 -m venv .venv && source .venv/bin/activate
-pip install -e ".[images]"
+python3 -m venv .venv && source .venv/bin/activate     # Python 3.10+
+pip install -e ".[integrations]"
 
-# 2) Configurar (al menos ANTHROPIC_API_KEY). DRY_RUN=true => no publica.
-cp .env.example .env
-$EDITOR .env
-
-# 3) Primer run en modo seguro (genera todo, no publica)
-make dry-run
-
-# 4) Ver el resultado
-cat output/$(date +%F)/editorial.md
+cp .env.example .env        # poné ANTHROPIC_API_KEY (y GEMINI_API_KEY si querés imágenes)
+make dry-run                # genera el editorial, NO publica, lo guarda en SQLite
+make web                    # dashboard en http://localhost:8080 → revisar y aprobar
 ```
 
-Cuando estés listo para publicar de verdad: completá las credenciales de WordPress
-/ upload-post en `.env`, poné `DRY_RUN=false` (empezá con `WORDPRESS_STATUS=draft`)
-y programá la ejecución diaria. → [docs/06-scheduling.md](docs/06-scheduling.md).
+> Sin acceso a Managed Agents, el runtime híbrido **cae a `local` automáticamente**:
+> el tutorial corre igual.
 
-## 📚 Tutorial (orden sugerido)
+## ☁️ Deploy a GCP (Cloud Run)
 
-1. [Arquitectura](docs/01-arquitectura.md) — el diseño y por qué.
-2. [Instalación](docs/02-instalacion.md) — setup y primer run.
-3. [Skills](docs/03-skills.md) — una capacidad por funcionalidad.
-4. [Agentes y LangGraph](docs/04-agentes-langgraph.md) — el código del equipo.
-5. [Publicación: blog y redes](docs/05-publicacion-redes.md) — WordPress + upload-post.
-6. [Scheduling](docs/06-scheduling.md) — correrlo todos los días.
-7. [Claude Cowork](docs/07-cowork.md) — el mismo equipo como agente autónomo.
-8. [Mejores prácticas](docs/08-mejores-practicas.md) — el resumen accionable.
+```bash
+gcloud auth login
+export GCP_PROJECT=supple-framing-498515-a0 REGION=southamerica-east1
+bash deploy/push-secrets.sh .env     # secretos → Secret Manager
+bash deploy/deploy.sh                 # build + deploy a Cloud Run
+bash deploy/scheduler.sh              # cron diario 08:00 AR (Cloud Scheduler)
+```
+
+Detalle en [docs/10-deploy-gcp.md](docs/10-deploy-gcp.md).
+
+## 📚 Tutorial
+
+1. [Arquitectura](docs/01-arquitectura.md)
+2. [Instalación](docs/02-instalacion.md)
+3. [Skills](docs/03-skills.md)
+4. [Agentes y LangGraph](docs/04-agentes-langgraph.md)
+5. [Publicación: blog, redes e imágenes](docs/05-publicacion-redes.md)
+6. [Scheduling](docs/06-scheduling.md)
+7. [Claude Cowork](docs/07-cowork.md)
+8. [Mejores prácticas](docs/08-mejores-practicas.md)
+9. [La UI (dashboard)](docs/09-ui.md)
+10. [Despliegue en GCP](docs/10-deploy-gcp.md)
+11. [Runtime híbrido / Managed Agents](docs/11-managed-agents.md)
 
 ## 🗂️ Estructura
 
 ```
-src/editorial_team/      # el sistema multiagente (LangGraph + Claude)
-  ├─ agents/             # un archivo por agente (scout, writer, critic, ...)
-  ├─ integrations/       # imágenes, WordPress, upload-post
-  ├─ llm.py schemas.py state.py graph.py config.py run_daily.py
-skills/                  # 7 Claude Agent Skills (una por funcionalidad)
-cowork/PROMPT.md         # prompt para correrlo en Claude Cowork
-scheduling/              # cron + launchd
-.github/workflows/       # GitHub Actions (run diario)
+src/editorial_team/
+  ├─ agents/             # nodos: producer (híbrido), scout, writer, critic, ...
+  ├─ integrations/       # managed_agents, images (Gemini), image_host (Cloudinary),
+  │                      #   search (Tavily), wordpress, upload_post
+  ├─ webapp/             # dashboard FastAPI + HTMX (templates/)
+  ├─ graph.py services.py storage.py publishing.py llm.py schemas.py config.py
+  └─ gcp_secrets.py run_daily.py
+skills/                  # 7 Claude Agent Skills
+deploy/                  # scripts GCP (deploy, push-secrets, scheduler)
+Dockerfile               # imagen para Cloud Run
+cowork/PROMPT.md         # prompt para Claude Cowork
 docs/                    # este tutorial
-tests/                   # tests (sin red ni API key)
+tests/                   # tests (sin red ni API key) — verde
 ```
 
 ## 🔧 Stack
 
 | | |
 |---|---|
-| Orquestación | LangGraph |
-| Modelo | Claude (`claude-opus-4-8`, `claude-sonnet-4-6`) — SDK `anthropic` |
-| Investigación | `web_search` + `web_fetch` (server-side, con citas) |
-| Skills | Claude Agent Skills |
-| Blog | WordPress REST API |
-| Redes | upload-post.com |
-| Imágenes | proveedor configurable (`gpt-image-1` por defecto) |
+| Orquestación | LangGraph (+ Managed Agents en híbrido) |
+| Modelo | Claude `claude-opus-4-8` / `claude-sonnet-4-6` |
+| Investigación | `web_search`/`web_fetch` o Tavily |
+| Imágenes | Gemini `gemini-3-pro-image` ("Nano Banana") + Cloudinary |
+| Blog / Redes | WordPress REST · upload-post.com |
+| UI / Backend | FastAPI + HTMX |
+| Persistencia | SQLite (local) / Cloud SQL (GCP) |
+| Despliegue | GCP Cloud Run · Secret Manager · Cloud Scheduler |
 
 ## 🔐 Seguridad
 
-- Los secretos van **sólo** en `.env` (ignorado por git) o en *secrets* de CI.
-  En este repo público sólo vive `.env.example` con placeholders.
-- WordPress usa **Application Password** (no la contraseña real).
-- **`DRY_RUN=true` por defecto**: nada se publica sin intención explícita.
-- Estado `draft` en el blog para revisión humana antes de salir en vivo.
-
-Más en [docs/08-mejores-practicas.md](docs/08-mejores-practicas.md).
-
-## ⚠️ Aviso
-
-Proyecto educativo. Verificá siempre el contenido antes de publicar: aunque el
-sistema valida y revalida datos, la responsabilidad editorial final es humana. No
-constituye consejo de inversión.
+- Secretos sólo en `.env` (local) o **Secret Manager** (GCP). En el repo público,
+  sólo `.env.example` con placeholders.
+- WordPress con **Application Password**; **`DRY_RUN=true`** por defecto.
+- El dashboard no trae auth propia: en producción protegelo (IAM/IAP).
 
 ## 📄 Licencia
 
-[MIT](LICENSE).
+[MIT](LICENSE). Proyecto educativo; verificá el contenido antes de publicar.

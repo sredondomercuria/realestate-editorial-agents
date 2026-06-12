@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex items-center justify-between mb-5">
+  <div>
+    <h1 class="text-xl font-semibold">Editoriales</h1>
+    <p class="text-sm text-slate-500">Revisá, editá y aprobá antes de publicar.</p>
+  </div>
+  <form method="post" action="/run">
+    <button class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2 rounded-lg shadow">
+      + Generar editorial
+    </button>
+  </form>
+</div>
+
+{% if not runs %}
+  <div class="bg-white border border-dashed border-slate-300 rounded-xl p-10 text-center text-slate-500">
+    Todavía no hay corridas. Tocá <b>“Generar editorial”</b> para crear la primera.
+    <p class="text-xs mt-2">La generación corre en segundo plano (tarda unos minutos). Recargá la página.</p>
+  </div>
+{% else %}
+  <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-100 text-slate-600 text-left">
+        <tr>
+          <th class="px-4 py-2">#</th>
+          <th class="px-4 py-2">Fecha</th>
+          <th class="px-4 py-2">Título</th>
+          <th class="px-4 py-2">Estado</th>
+          <th class="px-4 py-2"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in runs %}
+        <tr class="border-t border-slate-100 hover:bg-slate-50">
+          <td class="px-4 py-2 text-slate-400">{{ r.id }}</td>
+          <td class="px-4 py-2 whitespace-nowrap">{{ r.run_date }}</td>
+          <td class="px-4 py-2">{{ r.title or "(sin título)" }}</td>
+          <td class="px-4 py-2">
+            {% set color = {'generated':'bg-amber-100 text-amber-800','published':'bg-emerald-100 text-emerald-800','failed':'bg-rose-100 text-rose-800'} %}
+            <span class="text-xs px-2 py-1 rounded-full {{ color.get(r.status,'bg-slate-100 text-slate-700') }}">{{ r.status }}</span>
+          </td>
+          <td class="px-4 py-2 text-right">
+            <a href="/runs/{{ r.id }}" class="text-blue-600 hover:underline">Revisar →</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endif %}
+{% endblock %}

@@ -8,11 +8,16 @@ arma todo pero **no publica** (devuelve una previsualización).
 Claude no genera imágenes. El flujo es:
 
 1. El ilustrador usa Claude para escribir un **prompt visual** + `alt_text`.
-2. `integrations/images.py` renderiza con el proveedor configurado:
-   - `IMAGE_PROVIDER=openai` → modelo `gpt-image-1` (requiere `OPENAI_API_KEY`).
-   - `IMAGE_PROVIDER=none` → no genera; sólo guarda el prompt.
+2. `integrations/images.py` renderiza con el proveedor configurado (`IMAGE_PROVIDER`):
+   - `gemini` (por defecto) → **Nano Banana** (`IMAGE_MODEL`): `gemini-3-pro-image`
+     (Pro), `gemini-3.1-flash-image` (NB2, 4K) o `gemini-2.5-flash-image`. Requiere
+     `GEMINI_API_KEY`.
+   - `openai` → `gpt-image-1` (requiere `OPENAI_API_KEY`).
+   - `none` → no genera; sólo guarda el prompt.
+3. Si `IMAGE_HOST=cloudinary`, la imagen se sube a un CDN (`integrations/image_host.py`)
+   para obtener una URL pública (`CLOUDINARY_URL`).
 
-Para cambiar de proveedor (Stability, Replicate, Vertex...) editá sólo ese módulo.
+Para cambiar de proveedor (Stability, Replicate, Vertex, GCS...) editá esos módulos.
 
 ## Blog: WordPress REST API
 

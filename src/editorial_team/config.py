@@ -1,9 +1,13 @@
 """Configuración central del equipo editorial.
 
-Toda la parametrización (modelos, credenciales, política editorial) se lee de
-variables de entorno / archivo `.env` mediante `pydantic-settings`. Esto mantiene
-los secretos fuera del código y permite cambiar de comportamiento sin tocar el
-código fuente — una de las "mejores prácticas" del tutorial.
+Toda la parametrización (modelos, credenciales, política editorial, infraestructura)
+se lee de variables de entorno / archivo `.env` mediante `pydantic-settings`. Esto
+mantiene los secretos fuera del código y permite cambiar de comportamiento sin tocar
+el código fuente.
+
+Infra: el proyecto corre 100% local (SQLite + .env), pero está preparado para GCP
+(Cloud Run + Secret Manager + Cloud Scheduler). Ver `editorial_team.gcp_secrets` y
+`docs/10-deploy-gcp.md`.
 """
 
 from __future__ import annotations
@@ -24,6 +28,15 @@ class Settings(BaseSettings):
     # --- Claude / Anthropic ---
     anthropic_api_key: str = Field(default="", alias="ANTHROPIC_API_KEY")
 
+    # --- Runtime de los agentes ---
+    # hybrid -> la producción editorial (investigar+validar+redactar+revisar) corre
+    #           como un Managed Agent en la plataforma de Claude; el resto en LangGraph.
+    # local  -> todo el pipeline corre como nodos LangGraph en este backend.
+    agent_runtime: str = Field(default="hybrid", alias="AGENT_RUNTIME")
+    # IDs cacheados del Managed Agent (se crean una vez; ver editorial_team.integrations.managed_agents)
+    managed_agent_id: str = Field(default="", alias="MANAGED_AGENT_ID")
+    managed_env_id: str = Field(default="", alias="MANAGED_ENV_ID")
+
     # --- Modelos por agente ---
     model_scout: str = Field(default="claude-opus-4-8", alias="MODEL_SCOUT")
     model_curator: str = Field(default="claude-sonnet-4-6", alias="MODEL_CURATOR")
@@ -41,10 +54,25 @@ class Settings(BaseSettings):
     min_sources_per_claim: int = Field(default=2, alias="MIN_SOURCES_PER_CLAIM")
     blog_name: str = Field(default="Real Estate Insights", alias="BLOG_NAME")
 
-    # --- Imágenes ---
-    image_provider: str = Field(default="none", alias="IMAGE_PROVIDER")  # openai | none
+    # --- Investigación / búsqueda ---
+    # claude  -> herramientas server-side web_search + web_fetch
+    # tavily  -> API Tavily (optimizada para agentes) + síntesis con Claude
+    research_backend: str = Field(default="claude", alias="RESEARCH_BACKEND")
+    tavily_api_key: str = Field(default="", alias="TAVILY_API_KEY")
+
+    # --- Generación de imágenes ---
+    # IMAGE_PROVIDER: gemini | openai | none
+    image_provider: str = Field(default="gemini", alias="IMAGE_PROVIDER")
+    # Gemini "Nano Banana": gemini-3-pro-image (Pro) | gemini-3.1-flash-image (NB2) | gemini-2.5-flash-image
+    image_model: str = Field(default="gemini-3-pro-image", alias="IMAGE_MODEL")
+    gemini_api_key: str = Field(default="", alias="GEMINI_API_KEY")
     openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
     image_size: str = Field(default="1536x1024", alias="IMAGE_SIZE")
+
+    # --- Hosting de imágenes (CDN) ---
+    # IMAGE_HOST: cloudinary | none
+    image_host: str = Field(default="none", alias="IMAGE_HOST")
+    cloudinary_url: str = Field(default="", alias="CLOUDINARY_URL")
 
     # --- Blog (WordPress) ---
     wordpress_url: str = Field(default="", alias="WORDPRESS_URL")
@@ -58,6 +86,18 @@ class Settings(BaseSettings):
     social_platforms: str = Field(
         default="instagram,linkedin,facebook,x", alias="SOCIAL_PLATFORMS"
     )
+
+    # --- Persistencia ---
+    database_path: str = Field(default="output/editorial.db", alias="DATABASE_PATH")
+
+    # --- Webapp / UI ---
+    web_host: str = Field(default="0.0.0.0", alias="WEB_HOST")
+    web_port: int = Field(default=8080, alias="PORT")  # Cloud Run inyecta PORT
+    scheduler_token: str = Field(default="", alias="SCHEDULER_TOKEN")
+
+    # --- GCP ---
+    use_gcp_secrets: bool = Field(default=False, alias="USE_GCP_SECRETS")
+    gcp_project: str = Field(default="", alias="GCP_PROJECT")
 
     # --- Ejecución ---
     dry_run: bool = Field(default=True, alias="DRY_RUN")

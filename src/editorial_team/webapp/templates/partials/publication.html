@@ -1,0 +1,26 @@
+{% set pub = pub if pub is defined else (run.state.publication or None) %}
+{% if not pub %}
+  <p class="text-xs text-slate-400">Sin publicar todavía.</p>
+{% else %}
+  {% set blog = pub.blog or {} %}
+  <div class="text-xs space-y-1">
+    <p>Blog:
+      {% if blog.status == 'published' %}
+        <a href="{{ blog.link }}" target="_blank" class="text-emerald-700 underline">publicado ↗</a>
+      {% else %}
+        <span class="text-slate-500">{{ blog.status or '—' }}</span>
+      {% endif %}
+    </p>
+    {% for s in pub.social or [] %}
+      <p>{{ s.platform }}:
+        <span class="{{ 'text-emerald-700' if s.status=='published' else ('text-rose-700' if s.status=='error' else 'text-slate-500') }}">
+          {{ s.status }}
+        </span>
+      </p>
+    {% endfor %}
+    {% if pub.errors %}
+      <p class="text-rose-600">Errores: {{ pub.errors | join('; ') }}</p>
+    {% endif %}
+    {% if pub.dry_run %}<p class="text-amber-600">(DRY_RUN: simulación)</p>{% endif %}
+  </div>
+{% endif %}

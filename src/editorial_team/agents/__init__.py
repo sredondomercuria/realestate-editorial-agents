@@ -8,12 +8,14 @@ from .critic import critic
 from .curator import curator
 from .fact_checker import fact_checker
 from .illustrator import illustrator
+from .producer import produce
 from .publisher import publisher
 from .scout import scout
 from .social_adapter import social_adapter
 from .writer import writer
 
 __all__ = [
+    "produce",
     "scout",
     "curator",
     "fact_checker",

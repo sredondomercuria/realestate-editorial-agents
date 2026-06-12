@@ -60,5 +60,5 @@ sistemas multiagente.
 - [ ] Verificaste los campos de la API de upload-post.
 - [ ] Definiste la hora y zona horaria del scheduler.
 
-## Fin del tutorial
-Volvé al [README](../README.md) o revisá el [índice de docs](01-arquitectura.md).
+## Siguiente
+→ [09-ui.md](09-ui.md) · [10-deploy-gcp.md](10-deploy-gcp.md) · [11-managed-agents.md](11-managed-agents.md)
