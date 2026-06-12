@@ -11,7 +11,7 @@ Endpoints:
   POST /runs/{id}/publish     publicar de verdad (blog + redes)
   POST /run                   lanzar una corrida nueva (background)
   POST /tasks/run-daily       lo invoca Cloud Scheduler (protegido por token)
-  GET  /healthz               health check para Cloud Run
+  GET  /health                health check para Cloud Run (no usar /healthz: lo reserva GFE)
 """
 
 from __future__ import annotations
@@ -46,8 +46,10 @@ TEMPLATES = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 TEMPLATES.env.filters["md"] = md_to_html
 
 
-@app.get("/healthz")
-def healthz() -> dict:
+@app.get("/health")
+def health() -> dict:
+    # Nota: NO usar "/healthz": Google Front End reserva esa ruta y devuelve 404
+    # antes de llegar al contenedor. "/health" sí llega a la app.
     return {"status": "ok"}
 
 
