@@ -15,20 +15,30 @@ from .publishing import do_publish
 
 
 def run_pipeline(region: str | None = None, *, run_date: str | None = None) -> dict:
-    """Corre el pipeline editorial completo y persiste la corrida. Devuelve {run_id, state}."""
+    """Corre el pipeline editorial completo y persiste la corrida. Devuelve {run_id, state}.
+
+    Crea la fila con estado 'running' ANTES de invocar el grafo, para que la UI
+    muestre la corrida en progreso al instante; luego la actualiza al terminar.
+    """
     settings = get_settings()
     region = region or settings.region_focus
     run_date = run_date or date.today().isoformat()
 
-    app = build_graph()
-    initial = {"run_date": run_date, "region": region, "revision_count": 0, "log": []}
-    state = app.invoke(initial, config={"recursion_limit": 50})
+    base = {"run_date": run_date, "region": region, "log": []}
+    run_id = storage.create_run(run_date=run_date, region=region, status="running", state=base)
 
-    # Estado de la corrida según si ya se publicó (DRY_RUN) o quedó para revisar.
-    published = bool((state.get("publication") or {}).get("blog", {}) and
-                     (state["publication"]["blog"] or {}).get("status") == "published")
-    status = "published" if published else "generated"
-    run_id = storage.create_run(run_date=run_date, region=region, status=status, state=state)
+    try:
+        app = build_graph()
+        state = app.invoke({**base, "revision_count": 0}, config={"recursion_limit": 50})
+    except Exception as exc:  # noqa: BLE001
+        storage.update_state(run_id, {**base, "log": [f"ERROR: {exc}"], "error": str(exc)})
+        storage.set_status(run_id, "failed")
+        raise
+
+    published = (state.get("publication") or {}).get("blog") or {}
+    status = "published" if published.get("status") == "published" else "generated"
+    storage.update_state(run_id, state)
+    storage.set_status(run_id, status)
     return {"run_id": run_id, "state": state}
 
 

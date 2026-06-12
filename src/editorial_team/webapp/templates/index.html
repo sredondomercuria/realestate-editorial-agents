@@ -36,8 +36,9 @@
           <td class="px-4 py-2 whitespace-nowrap">{{ r.run_date }}</td>
           <td class="px-4 py-2">{{ r.title or "(sin título)" }}</td>
           <td class="px-4 py-2">
-            {% set color = {'generated':'bg-amber-100 text-amber-800','published':'bg-emerald-100 text-emerald-800','failed':'bg-rose-100 text-rose-800'} %}
-            <span class="text-xs px-2 py-1 rounded-full {{ color.get(r.status,'bg-slate-100 text-slate-700') }}">{{ r.status }}</span>
+            {% set color = {'running':'bg-blue-100 text-blue-800 animate-pulse','generated':'bg-amber-100 text-amber-800','published':'bg-emerald-100 text-emerald-800','failed':'bg-rose-100 text-rose-800'} %}
+            {% set label = {'running':'generando…'} %}
+            <span class="text-xs px-2 py-1 rounded-full {{ color.get(r.status,'bg-slate-100 text-slate-700') }}">{{ label.get(r.status, r.status) }}</span>
           </td>
           <td class="px-4 py-2 text-right">
             <a href="/runs/{{ r.id }}" class="text-blue-600 hover:underline">Revisar →</a>
@@ -47,5 +48,11 @@
       </tbody>
     </table>
   </div>
+{% endif %}
+
+{% set running = runs | selectattr('status','equalto','running') | list %}
+{% if running %}
+  <p class="text-sm text-blue-600 mt-4">⏳ Generando editorial… (Claude investiga, valida y redacta; Gemini ilustra). Puede tardar unos minutos — la página se actualiza sola.</p>
+  <script>setTimeout(() => location.reload(), 6000);</script>
 {% endif %}
 {% endblock %}
