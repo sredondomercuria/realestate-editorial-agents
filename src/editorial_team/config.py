@@ -61,13 +61,20 @@ class Settings(BaseSettings):
     tavily_api_key: str = Field(default="", alias="TAVILY_API_KEY")
 
     # --- Generación de imágenes ---
-    # IMAGE_PROVIDER: gemini | openai | none
+    # IMAGE_PROVIDER:
+    #   gemini -> API de AI Studio (key GEMINI_API_KEY, crédito prepago)
+    #   vertex -> Vertex AI en tu proyecto GCP (factura por GCP; en Cloud Run sin key)
+    #   openai -> gpt-image-1
+    #   none   -> no genera
     image_provider: str = Field(default="gemini", alias="IMAGE_PROVIDER")
-    # Gemini "Nano Banana": gemini-3-pro-image (Pro) | gemini-3.1-flash-image (NB2) | gemini-2.5-flash-image
+    # Modelos: Gemini "Nano Banana" (gemini-3-pro-image / gemini-3.1-flash-image /
+    #   gemini-2.5-flash-image) o, en Vertex, Imagen (imagen-4.0-generate-001 / -fast-).
     image_model: str = Field(default="gemini-3-pro-image", alias="IMAGE_MODEL")
     gemini_api_key: str = Field(default="", alias="GEMINI_API_KEY")
     openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
     image_size: str = Field(default="1536x1024", alias="IMAGE_SIZE")
+    # Vertex AI (cuando IMAGE_PROVIDER=vertex). Usa GCP_PROJECT (definido abajo).
+    vertex_location: str = Field(default="global", alias="VERTEX_LOCATION")
 
     # --- Hosting de imágenes (CDN) ---
     # IMAGE_HOST: cloudinary | none
