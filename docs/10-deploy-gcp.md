@@ -52,7 +52,11 @@ sobreviven entre instancias. Para producción:
 
 - **Datos**: usá **Cloud SQL (Postgres)** o **Firestore**. La capa `storage.py`
   está aislada para cambiar el backend sin tocar el resto.
-- **Imágenes**: usá `IMAGE_HOST=cloudinary` (URLs públicas) o **GCS**.
+- **Imágenes**: en GCP conviene `IMAGE_PROVIDER=vertex` (Vertex AI) — factura por
+  el proyecto y en Cloud Run anda con la service account, sin API key. `deploy.sh`
+  ya habilita `aiplatform.googleapis.com`, le da rol `aiplatform.user` a la SA y
+  setea `IMAGE_PROVIDER=vertex` + `imagen-4.0-generate-001`. Hosting opcional con
+  `IMAGE_HOST=cloudinary` o GCS.
 
 Para el tutorial/demo, SQLite efímera alcanza (cada corrida se ve mientras viva la
 instancia, y los posts ya quedan en el blog/redes).

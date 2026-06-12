@@ -11,7 +11,12 @@ Claude no genera imágenes. El flujo es:
 2. `integrations/images.py` renderiza con el proveedor configurado (`IMAGE_PROVIDER`):
    - `gemini` (por defecto) → **Nano Banana** (`IMAGE_MODEL`): `gemini-3-pro-image`
      (Pro), `gemini-3.1-flash-image` (NB2, 4K) o `gemini-2.5-flash-image`. Requiere
-     `GEMINI_API_KEY`.
+     `GEMINI_API_KEY` con crédito en AI Studio.
+   - `vertex` → **Vertex AI** en tu proyecto GCP. **Factura por GCP**, no por el
+     prepago de AI Studio (útil si éste se queda sin crédito). Modelos: Imagen
+     (`imagen-4.0-generate-001`, `us-central1`) o `gemini-2.5-flash-image` (`global`).
+     En Cloud Run usa la service account (sin key); local usa
+     `gcloud auth application-default login`.
    - `openai` → `gpt-image-1` (requiere `OPENAI_API_KEY`).
    - `none` → no genera; sólo guarda el prompt.
 3. Si `IMAGE_HOST=cloudinary`, la imagen se sube a un CDN (`integrations/image_host.py`)
