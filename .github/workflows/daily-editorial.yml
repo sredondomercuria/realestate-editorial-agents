@@ -1,0 +1,60 @@
+name: Editorial diario de Real Estate
+
+# Corre todos los días a las 11:00 UTC = 08:00 America/Argentina/Buenos_Aires (UTC-3).
+# También se puede disparar a mano desde la pestaña Actions (workflow_dispatch).
+on:
+  schedule:
+    - cron: "0 11 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Modo simulación (no publica)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  run-editorial:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: pip install -e ".[images]"
+
+      - name: Ejecutar el workflow editorial
+        env:
+          # Configurá estos secretos en: Settings -> Secrets and variables -> Actions
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          IMAGE_PROVIDER: ${{ vars.IMAGE_PROVIDER || 'none' }}
+          WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
+          WORDPRESS_USER: ${{ secrets.WORDPRESS_USER }}
+          WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
+          UPLOADPOST_API_KEY: ${{ secrets.UPLOADPOST_API_KEY }}
+          UPLOADPOST_USER: ${{ secrets.UPLOADPOST_USER }}
+          SOCIAL_PLATFORMS: ${{ vars.SOCIAL_PLATFORMS || 'instagram,linkedin,facebook,x' }}
+          REGION_FOCUS: ${{ vars.REGION_FOCUS || 'Argentina y Latinoamérica' }}
+          # En ejecución manual respeta el input; en el cron, por defecto NO publica.
+          # Cambiá a 'false' acá (o en vars) cuando quieras publicar de verdad.
+          DRY_RUN: ${{ github.event.inputs.dry_run || vars.DRY_RUN || 'true' }}
+        run: python -m editorial_team.run_daily
+
+      - name: Subir artefactos (editorial e imágenes)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: editorial-${{ github.run_id }}
+          path: |
+            output/
+            images/
+          if-no-files-found: ignore
+          retention-days: 14

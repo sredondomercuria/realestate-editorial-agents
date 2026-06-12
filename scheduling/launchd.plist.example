@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  macOS (launchd): ejecuta el workflow editorial todos los días a las 08:00.
+
+  Instalación:
+    1) Editá las rutas absolutas de abajo.
+    2) cp scheduling/launchd.plist.example ~/Library/LaunchAgents/com.realestate.editorial.plist
+    3) launchctl load ~/Library/LaunchAgents/com.realestate.editorial.plist
+
+  Nota: para que tome el .env, el script de wrapper debe cargarlo, o pasá las
+  variables en <EnvironmentVariables>. Acá usamos un wrapper con bash -lc.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.realestate.editorial</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>-lc</string>
+        <string>cd /ruta/absoluta/realestate-editorial-agents && set -a && . ./.env && set +a && /ruta/al/venv/bin/python -m editorial_team.run_daily</string>
+    </array>
+
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>8</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/ruta/absoluta/realestate-editorial-agents/output/launchd.log</string>
+    <key>StandardErrorPath</key>
+    <string>/ruta/absoluta/realestate-editorial-agents/output/launchd.err.log</string>
+</dict>
+</plist>

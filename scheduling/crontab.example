@@ -1,0 +1,9 @@
+# Ejecutar el equipo editorial todos los días a las 08:00 (hora del servidor).
+# Instalá con:  crontab scheduling/crontab.example   (o copiá la línea a `crontab -e`)
+#
+# Ajustá la ruta absoluta al proyecto y al intérprete de Python del virtualenv.
+# Recordá exportar las variables del .env (cron NO lee tu .env automáticamente):
+# una opción simple es cargar el .env dentro del comando.
+
+# m h  dom mon dow   command
+0 8 * * *  cd /ruta/absoluta/realestate-editorial-agents && set -a && . ./.env && set +a && /ruta/al/venv/bin/python -m editorial_team.run_daily >> output/cron.log 2>&1

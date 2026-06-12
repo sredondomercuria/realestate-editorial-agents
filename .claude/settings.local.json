@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh auth *)",
+      "Bash(gh api *)",
+      "Skill(claude-api)",
+      "Skill(claude-api:*)",
+      "Bash(python3 -m py_compile src/editorial_team/*.py src/editorial_team/agents/*.py src/editorial_team/integrations/*.py)",
+      "Bash(python3 -c \"import importlib.util as u; [print\\(m, 'OK' if u.find_spec\\(m\\) else 'MISSING'\\) for m in ['pydantic','pydantic_settings','requests','anthropic','langgraph','dotenv','pytest','openai']]\")"
+    ]
+  }
+}
