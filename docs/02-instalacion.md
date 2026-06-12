@@ -49,6 +49,15 @@ uv pip install -e ".[dev]"      # ← uv pip, NO pip
 > El `Makefile` usa `.venv/bin/python` si existe, así que `make web` / `make test`
 > toman el venv automáticamente (no hace falta `activate`).
 
+**Reproducción exacta (opcional, recomendado a futuro).** El install de arriba usa
+rangos de versión (`>=`), que con el tiempo podrían resolver a una versión nueva que
+rompa algo. Para clavar las **versiones exactas probadas** usá el lockfile:
+
+```bash
+pip install -r requirements.lock && pip install -e . --no-deps
+# (con uv:  uv pip install -r requirements.lock && uv pip install -e . --no-deps)
+```
+
 ## 2. Configurar el entorno
 
 ```bash
