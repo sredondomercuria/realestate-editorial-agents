@@ -25,16 +25,29 @@ Empezá con `DRY_RUN=true`: genera pero no publica.
 ```bash
 git clone https://github.com/sredondomercuria/realestate-editorial-agents.git
 cd realestate-editorial-agents
+```
 
+Elegí **una** de las dos opciones según tu Python:
+
+**Opción A — tenés Python 3.10+** (venv estándar, trae `pip`):
+
+```bash
 python3 -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
-# (con uv:  uv venv --python 3.12 .venv && source .venv/bin/activate)
+pip install -e ".[dev]"        # núcleo + tests. (".[dev,integrations]" suma Tavily/Cloudinary)
+```
 
-pip install -e .                  # núcleo (incluye Gemini, FastAPI, LangGraph...)
-# pip install -e ".[integrations]"  # + Tavily y Cloudinary (opcionales)
+**Opción B — NO tenés 3.10+ (o querés aislarlo del sistema): usá `uv`.**
+⚠️ Importante: los venv de `uv` **no traen `pip`** — instalá con **`uv pip`**, no con `pip`:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh   # si no tenés uv
+uv python install 3.12
+uv venv --python 3.12 .venv
+uv pip install -e ".[dev]"      # ← uv pip, NO pip
 ```
 
 > El `Makefile` usa `.venv/bin/python` si existe, así que `make web` / `make test`
-> toman el venv automáticamente.
+> toman el venv automáticamente (no hace falta `activate`).
 
 ## 2. Configurar el entorno
 

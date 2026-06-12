@@ -44,13 +44,16 @@ En modo `local`, `producer` se reemplaza por la cadena
 ## 🚀 Quickstart (local)
 
 ```bash
-python3 -m venv .venv && source .venv/bin/activate     # Python 3.10+
-pip install -e ".[integrations]"
+# Requiere Python 3.10+. ¿No tenés? Usá uv (ver docs/02): uv venv + `uv pip install`.
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"     # núcleo + tests (incluye Gemini, FastAPI, LangGraph...)
 
 cp .env.example .env        # poné ANTHROPIC_API_KEY (y GEMINI_API_KEY si querés imágenes)
-make dry-run                # genera el editorial, NO publica, lo guarda en SQLite
-make web                    # dashboard en http://localhost:8080 → revisar y aprobar
+make web                    # dashboard en http://localhost:8080 → "+ Generar editorial"
+# o por CLI:  make dry-run  (genera y guarda sin publicar)
 ```
+
+> Detalle de instalación, costos y troubleshooting: [docs/02-instalacion.md](docs/02-instalacion.md).
 
 > Sin acceso a Managed Agents, el runtime híbrido **cae a `local` automáticamente**:
 > el tutorial corre igual.
