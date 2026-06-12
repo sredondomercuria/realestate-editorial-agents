@@ -14,14 +14,14 @@ KEYS=(
   UPLOADPOST_API_KEY UPLOADPOST_USER CLOUDINARY_URL SCHEDULER_TOKEN
 )
 
-# Cargar el .env
-set -a; . "$ENV_FILE"; set +a
+# Leer un valor del .env SIN sourcear (robusto ante valores con espacios).
+get_env() { grep -E "^$1=" "$ENV_FILE" | head -1 | cut -d= -f2-; }
 
 PROJECT_NUMBER="$(gcloud projects describe "$PROJECT" --format='value(projectNumber)')"
 RUN_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
 
 for KEY in "${KEYS[@]}"; do
-  VALUE="${!KEY:-}"
+  VALUE="$(get_env "$KEY")"
   [ -z "$VALUE" ] && { echo "· $KEY vacío, salteado"; continue; }
   if gcloud secrets describe "$KEY" >/dev/null 2>&1; then
     printf '%s' "$VALUE" | gcloud secrets versions add "$KEY" --data-file=- >/dev/null

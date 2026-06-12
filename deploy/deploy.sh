@@ -31,7 +31,7 @@ gcloud run deploy "$SERVICE" \
   --region "$REGION" \
   --allow-unauthenticated \
   --memory 1Gi --cpu 1 --timeout 900 \
-  --set-env-vars "USE_GCP_SECRETS=true,GCP_PROJECT=${PROJECT},AGENT_RUNTIME=hybrid,DRY_RUN=true,RESEARCH_BACKEND=claude,IMAGE_PROVIDER=vertex,IMAGE_MODEL=imagen-4.0-generate-001,VERTEX_LOCATION=us-central1"
+  --set-env-vars "USE_GCP_SECRETS=true,GCP_PROJECT=${PROJECT},AGENT_RUNTIME=hybrid,DRY_RUN=true,RESEARCH_BACKEND=claude,IMAGE_PROVIDER=vertex,IMAGE_MODEL=gemini-3-pro-image,VERTEX_LOCATION=global"
 
 echo "✅ Listo. URL:"
 gcloud run services describe "$SERVICE" --region "$REGION" --format="value(status.url)"
