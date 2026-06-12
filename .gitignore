@@ -31,3 +31,6 @@ images/
 .vscode/
 .idea/
 .DS_Store
+
+# Configuración local de Claude Code (personal)
+.claude/
