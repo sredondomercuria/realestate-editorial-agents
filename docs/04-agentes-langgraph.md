@@ -76,9 +76,14 @@ Cada rol usa el modelo más adecuado (configurable en `.env`):
 
 ## El grafo (`graph.py`)
 
+`build_graph()` arma el grafo **según `AGENT_RUNTIME`**:
+
+- **`hybrid`** (default): `START → producer → illustrator → social_adapter → publisher`.
+  El nodo `producer` delega en un Managed Agent (ver [11-managed-agents.md](11-managed-agents.md)).
+- **`local`**: el sub-pipeline completo con el bucle de revalidación crítica:
+
 ```python
-g = StateGraph(EditorialState)
-# ... add_node por cada agente ...
+# Variante local (en hybrid, estos 5 nodos los reemplaza `producer`)
 g.add_edge(START, "scout")
 g.add_edge("scout", "curator")
 g.add_edge("curator", "fact_checker")
@@ -86,14 +91,16 @@ g.add_edge("fact_checker", "writer")
 g.add_edge("writer", "critic")
 g.add_conditional_edges("critic", route_after_review,
                         {"revise": "writer", "approve": "illustrator"})
+# Distribución (común a ambos runtimes):
 g.add_edge("illustrator", "social_adapter")
 g.add_edge("social_adapter", "publisher")
 g.add_edge("publisher", END)
-app = g.compile()
 ```
 
 `route_after_review` devuelve `revise` (vuelve al redactor) o `approve` (sigue),
-según el veredicto del crítico y cuántas revisiones quedan.
+según el veredicto del crítico y cuántas revisiones quedan. El nodo `producer` del
+modo híbrido tiene **fallback**: si Managed Agents no está disponible, corre el
+sub-pipeline local internamente y devuelve el mismo resultado.
 
 ## Ejecutar
 

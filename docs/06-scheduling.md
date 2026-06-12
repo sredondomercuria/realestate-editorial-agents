@@ -48,6 +48,12 @@ programá el prompt de `cowork/PROMPT.md` con la **herramienta de tareas
 programadas** de Cowork para que se ejecute diariamente. En Claude Code, la skill
 `schedule` crea rutinas (cron) para agentes en la nube.
 
+## Opción E — GCP Cloud Scheduler (si deployás a Cloud Run)
+
+Cloud Scheduler le pega a `POST /tasks/run-daily` (protegido por `SCHEDULER_TOKEN`)
+todos los días. Se configura con `deploy/scheduler.sh`. Ver
+[10-deploy-gcp.md](10-deploy-gcp.md).
+
 ## Consejos de operación
 
 - **Empezá en `DRY_RUN=true`** unos días; revisá los `output/<fecha>/` antes de

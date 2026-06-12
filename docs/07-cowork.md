@@ -39,14 +39,14 @@ news-research → fact-check → editorial-writing ⇄ critical-review
 Con las mismas reglas no negociables: cero datos inventados, atribución de cada
 cifra, sin clickbait, y modo seguro `DRY_RUN` para aprobación humana.
 
-## Managed Agents (alternativa avanzada)
+## Managed Agents (ya implementado: runtime híbrido)
 
-Si querés que **Anthropic** corra el bucle del agente y aloje el sandbox de
-herramientas (en vez de tu servidor), mirá **Managed Agents** de la plataforma
-Claude: creás un *agent* (modelo + system prompt + tools + skills) una vez y abrís
-*sessions* por corrida; podés adjuntar las skills y programar la ejecución vía
-webhooks/cron. Es el camino "todo gestionado". Ver la documentación de la
-plataforma Claude → Managed Agents.
+Cowork es un producto interactivo. Si querés que **Anthropic** corra el bucle del
+agente de forma programática (desde tu backend), eso es **Managed Agents**, y en
+este proyecto **ya está implementado** como el runtime `hybrid`: el nodo `producer`
+crea un *agent* (modelo + system prompt + skills) y abre una *session* por corrida.
+Es la diferencia entre Cowork (lo manejás vos en la UI de Claude) y Managed Agents
+(lo maneja tu código). Ver [11-managed-agents.md](11-managed-agents.md).
 
 ## Siguiente
 → [08-mejores-practicas.md](08-mejores-practicas.md)

@@ -11,8 +11,8 @@ help:  ## Muestra esta ayuda
 install:  ## Instala el paquete en modo editable
 	$(PY) -m pip install -e .
 
-dev:  ## Instala dependencias de desarrollo + imágenes
-	$(PY) -m pip install -e ".[dev,images]"
+dev:  ## Instala dependencias de desarrollo + integraciones (Tavily, Cloudinary)
+	$(PY) -m pip install -e ".[dev,integrations]"
 
 run:  ## Ejecuta el workflow editorial completo (respeta DRY_RUN del .env)
 	$(PY) -m editorial_team.run_daily
