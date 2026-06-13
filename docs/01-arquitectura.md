@@ -40,36 +40,92 @@ desde donde sea).
 | Skills | **Claude Agent Skills** (`skills/`) | Encapsulan el "cómo"; las usa el grafo y el Managed Agent. |
 | Runtime de agentes | **LangGraph** + **Managed Agents** (híbrido) | LangGraph orquesta; la producción autónoma corre en la plataforma de Claude. |
 | Publicación | **WordPress REST** + **upload-post.com** | Blog + todas las redes con clientes reemplazables. |
-| Imágenes | **Gemini "Nano Banana"** (`gemini-3-pro-image`) + Cloudinary | Claude escribe el prompt; Gemini renderiza; CDN opcional. |
+| Imágenes | **Gemini "Nano Banana Pro"** (`gemini-3-pro-image`) vía AI Studio o **Vertex AI** | Claude escribe el prompt; Gemini renderiza. Vertex factura por GCP. |
 | UI + Backend | **FastAPI + HTMX** | Panel de revisión/aprobación (human-in-the-loop). |
 | Persistencia | **SQLite** (local) / Cloud SQL (GCP) | Historial de corridas; habilita la UI. |
 | Despliegue | **GCP Cloud Run** + Secret Manager + Cloud Scheduler | Local-first, listo para la nube. |
 
-## El flujo (runtime híbrido, el default)
+## Diagrama de arquitectura del sistema
+
+Visión general de las piezas y los flujos. Verde = Anthropic, celeste = Google Cloud;
+el bloque central es **tu código** (local o Cloud Run).
 
 ```mermaid
-flowchart TD
-    START([Inicio / botón Generar]) --> producer[🤖 Producer<br/>Managed Agent en la plataforma de Claude:<br/>investiga · valida · redacta · revalida]
-    producer --> illustrator[🎨 Ilustrador<br/>prompt + imagen Gemini]
-    illustrator --> social[📱 Adaptador<br/>variantes por red]
-    social --> publisher[🚀 Publicador<br/>blog + redes · respeta DRY_RUN]
-    publisher --> persist[(💾 SQLite)]
-    persist --> ui[🖥️ Dashboard:<br/>revisar · editar · aprobar y publicar]
+flowchart TB
+    user["👤 Usuario / Navegador"]
+    cron["⏰ Cloud Scheduler<br/>(corrida diaria)"]
+    subgraph backend["🖥️ TU BACKEND — local o GCP Cloud Run"]
+      direction TB
+      ui["Dashboard FastAPI + HTMX"]
+      api["API · /run · /tasks/run-daily · /runs/:id"]
+      lg["LangGraph — run_pipeline()"]
+      pub["publishing.do_publish()"]
+      db[("SQLite / Cloud SQL")]
+    end
+    subgraph anthropic["🟣 ANTHROPIC — plataforma Claude"]
+      direction TB
+      managed["Managed Agents<br/>loop + sandbox"]
+      claude["Modelo Claude<br/>Opus 4.8 / Sonnet 4.6"]
+      web["web_search · web_fetch"]
+    end
+    subgraph gcp["☁️ GOOGLE CLOUD"]
+      direction TB
+      vertex["Vertex AI<br/>Nano Banana Pro"]
+      secret["Secret Manager"]
+    end
+    subgraph out["📤 DISTRIBUCIÓN"]
+      direction TB
+      wp["WordPress (blog)"]
+      soc["upload-post (redes)"]
+      cdn["Cloudinary (CDN)"]
+    end
+    user --> ui
+    cron -->|"POST + token"| api
+    ui --> api --> lg
+    lg -->|"hybrid"| managed
+    lg -->|"local"| claude
+    managed --> claude
+    claude -->|"usa"| web
+    lg -->|"ilustrar"| vertex
+    lg --> pub
+    pub --> wp
+    pub --> soc
+    pub -.->|"opcional"| cdn
+    lg --> db
+    ui -.->|"lee / aprueba"| db
+    secret -.->|"runtime"| backend
 ```
 
-En modo **`local`**, el nodo `producer` se reemplaza por la cadena de agentes
-corriendo como nodos LangGraph en tu backend, con el bucle de revalidación crítica:
+## Diagrama de agentes en detalle
+
+Cada agente tiene **una responsabilidad**, una **skill** y un **modelo**. En `hybrid`,
+el bloque `producer` lo ejecuta el Managed Agent en Anthropic; en `local`, esos 5
+agentes corren como nodos LangGraph en tu backend (mismas skills, mismo bucle).
 
 ```mermaid
-flowchart LR
-    scout[🔎 Scout] --> curator[🗂️ Curador] --> fact[✅ Fact-checker] --> writer[✍️ Redactor]
-    writer --> critic[🧐 Crítico]
-    critic -->|needs_revision| writer
-    critic -->|approved| out([→ ilustrador...])
+flowchart TB
+    START(["▶ Inicio / botón Generar"]) --> PROD
+    subgraph PROD["🤖 producer — Managed Agent (hybrid) o nodos LangGraph (local)"]
+      direction TB
+      scout["🔎 Scout · news-research · Opus<br/>tool: web_search ➜ topics"]
+      curator["🗂️ Curador · news-research · Sonnet<br/>➜ selected + ángulo"]
+      fact["✅ Fact-checker · fact-check · Opus<br/>tool: web_search ➜ factcheck"]
+      writer["✍️ Redactor · editorial-writing · Opus<br/>➜ draft"]
+      critic["🧐 Crítico · critical-review · Opus<br/>tool: web_search ➜ review"]
+      scout --> curator --> fact --> writer --> critic
+      critic -->|"needs_revision · hasta MAX_REVISIONS"| writer
+    end
+    PROD -->|"approved"| illus["🎨 Ilustrador · image-generation · Sonnet<br/>render: Vertex / Nano Banana Pro ➜ images"]
+    illus --> socn["📱 Adaptador redes · social-publishing · Sonnet<br/>➜ social (1 por red)"]
+    socn --> pubn["🚀 Publicador · blog/social-publishing<br/>WordPress + upload-post · DRY_RUN ➜ publication"]
+    pubn --> persist[("💾 SQLite")]
+    persist --> uin(["🖥️ Dashboard — aprobar y publicar"])
 ```
 
-Las dos formas comparten las **mismas skills** y el **mismo pipeline de distribución**
-(ilustrar → redes → publicar → persistir → UI).
+**Cómo leerlo:** cada flecha pasa el estado al siguiente agente. El bucle
+`crítico → redactor` es la **revalidación crítica** (hasta `MAX_REVISIONS`). De
+`producer` para abajo (ilustrar → redes → publicar → persistir) es **idéntico** en
+ambos runtimes.
 
 ## El estado compartido
 

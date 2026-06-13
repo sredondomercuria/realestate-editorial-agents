@@ -30,16 +30,82 @@ en un blog y en todas las redes** — con un **dashboard de revisión/aprobació
 - **Listo para GCP**: Dockerfile (Cloud Run), Secret Manager, Cloud Scheduler.
 - **DRY_RUN seguro por defecto** + tests (verde) + docs.
 
-## 🧠 El equipo (runtime híbrido)
+## 🗺️ Arquitectura del sistema
 
-```
-START → producer (Managed Agent: investiga→valida→redacta→revalida)
-          → 🎨 Ilustrador (Gemini) → 📱 Adaptador de redes → 🚀 Publicador → END
-                      (LangGraph orquesta · todo persistido en SQLite)
+> Verde = Anthropic · Celeste = Google Cloud · el bloque central es **tu código** (local o Cloud Run).
+
+```mermaid
+flowchart TB
+    user["👤 Usuario / Navegador"]
+    cron["⏰ Cloud Scheduler<br/>(corrida diaria)"]
+    subgraph backend["🖥️ TU BACKEND — local o GCP Cloud Run"]
+      direction TB
+      ui["Dashboard FastAPI + HTMX"]
+      api["API · /run · /tasks/run-daily · /runs/:id"]
+      lg["LangGraph — run_pipeline()"]
+      pub["publishing.do_publish()"]
+      db[("SQLite / Cloud SQL")]
+    end
+    subgraph anthropic["🟣 ANTHROPIC — plataforma Claude"]
+      direction TB
+      managed["Managed Agents<br/>loop + sandbox"]
+      claude["Modelo Claude<br/>Opus 4.8 / Sonnet 4.6"]
+      web["web_search · web_fetch"]
+    end
+    subgraph gcp["☁️ GOOGLE CLOUD"]
+      direction TB
+      vertex["Vertex AI<br/>Nano Banana Pro"]
+      secret["Secret Manager"]
+    end
+    subgraph out["📤 DISTRIBUCIÓN"]
+      direction TB
+      wp["WordPress (blog)"]
+      soc["upload-post (redes)"]
+      cdn["Cloudinary (CDN)"]
+    end
+    user --> ui
+    cron -->|"POST + token"| api
+    ui --> api --> lg
+    lg -->|"hybrid"| managed
+    lg -->|"local"| claude
+    managed --> claude
+    claude -->|"usa"| web
+    lg -->|"ilustrar"| vertex
+    lg --> pub
+    pub --> wp
+    pub --> soc
+    pub -.->|"opcional"| cdn
+    lg --> db
+    ui -.->|"lee / aprueba"| db
+    secret -.->|"runtime"| backend
 ```
 
-En modo `local`, `producer` se reemplaza por la cadena
-`Scout → Curador → Fact-checker → Redactor ⇄ Crítico`. → [docs/01-arquitectura.md](docs/01-arquitectura.md).
+## 🧠 El equipo de agentes (en detalle)
+
+Cada agente: una responsabilidad, una **skill**, un **modelo**. En `hybrid`, el bloque
+`producer` lo corre el Managed Agent en Anthropic; en `local`, son nodos LangGraph en tu backend.
+
+```mermaid
+flowchart TB
+    START(["▶ Inicio / botón Generar"]) --> PROD
+    subgraph PROD["🤖 producer — Managed Agent (hybrid) o nodos LangGraph (local)"]
+      direction TB
+      scout["🔎 Scout · news-research · Opus<br/>tool: web_search ➜ topics"]
+      curator["🗂️ Curador · news-research · Sonnet<br/>➜ selected + ángulo"]
+      fact["✅ Fact-checker · fact-check · Opus<br/>tool: web_search ➜ factcheck"]
+      writer["✍️ Redactor · editorial-writing · Opus<br/>➜ draft"]
+      critic["🧐 Crítico · critical-review · Opus<br/>tool: web_search ➜ review"]
+      scout --> curator --> fact --> writer --> critic
+      critic -->|"needs_revision · hasta MAX_REVISIONS"| writer
+    end
+    PROD -->|"approved"| illus["🎨 Ilustrador · image-generation · Sonnet<br/>render: Vertex / Nano Banana Pro ➜ images"]
+    illus --> socn["📱 Adaptador redes · social-publishing · Sonnet<br/>➜ social (1 por red)"]
+    socn --> pubn["🚀 Publicador · blog/social-publishing<br/>WordPress + upload-post · DRY_RUN ➜ publication"]
+    pubn --> persist[("💾 SQLite")]
+    persist --> uin(["🖥️ Dashboard — aprobar y publicar"])
+```
+
+Más detalle en [docs/01-arquitectura.md](docs/01-arquitectura.md).
 
 ## 🚀 Quickstart (local)
 
@@ -72,7 +138,7 @@ Detalle en [docs/10-deploy-gcp.md](docs/10-deploy-gcp.md).
 
 ## 📚 Tutorial
 
-1. [Arquitectura](docs/01-arquitectura.md)
+1. [Arquitectura](docs/01-arquitectura.md) — con **diagramas** del sistema y de los agentes
 2. [Instalación](docs/02-instalacion.md)
 3. [Skills](docs/03-skills.md)
 4. [Agentes y LangGraph](docs/04-agentes-langgraph.md)
